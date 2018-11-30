@@ -1,51 +1,56 @@
-'use strict'
+#!/usr/bin/env node
 
-const fs = require('fs')
-const readPkg = require('read-pkg-up')
-const truncate = require('cli-truncate')
-const wrap = require('wrap-ansi')
-const pad = require('pad')
-const fuse = require('fuse.js')
-const homeDir = require('home-dir')
-const types = require('./lib/types')
+"use strict";
+
+const fs = require("fs");
+const readPkg = require("read-pkg-up");
+const truncate = require("cli-truncate");
+const wrap = require("wrap-ansi");
+const pad = require("pad");
+const fuse = require("fuse.js");
+const homeDir = require("home-dir");
+const types = require("./lib/types");
 
 const defaultConfig = {
   types,
-  symbol: false
-}
+  symbol: true,
+};
 
 function getEmojiChoices({ types, symbol }) {
-  const maxNameLength = types.reduce(
-    (maxLength, type) => (type.name.length > maxLength ? type.name.length : maxLength
-  ), 0)
+  const maxNameLength = types.reduce((maxLength, type) => (type.name.length > maxLength ? type.name.length : maxLength), 0);
 
-  return types.map(choice => ({
+  return types.map((choice) => ({
     name: `${pad(choice.name, maxNameLength)}  ${choice.emoji}  ${choice.description}`,
-    value: symbol ? choice.emoji : choice.code,
-    code: choice.code
-  }))
+    value: {
+      emo: symbol ? choice.emoji : choice.code,
+      cat: choice.name,
+    },
+    code: choice.code,
+  }));
 }
 
 function loadConfig() {
-  const getConfig = (obj) => obj && obj.config && obj.config['cz-emoji']
+  const getConfig = (obj) => obj && obj.config && obj.config["cz-emoji"];
 
   return readPkg()
     .then(({ pkg }) => {
-      const config = getConfig(pkg)
-      if (config) return config
+      const config = getConfig(pkg);
+      if (config) {
+        return config;
+      }
 
       return new Promise((resolve, reject) => {
-        fs.readFile(homeDir('.czrc'), 'utf8', (err, content) => {
-          if (err) reject(err)
-          const czrc = content && JSON.parse(content) || null
-          resolve(getConfig(czrc))
-        })
-      })
+        fs.readFile(homeDir(".czrc"), "utf8", (err, content) => {
+          if (err) {
+            reject(err);
+          }
+          const czrc = (content && JSON.parse(content)) || null;
+          resolve(getConfig(czrc));
+        });
+      });
     })
-    .then(config => (
-      Object.assign({}, defaultConfig, config)
-    ))
-    .catch(() => (defaultConfig))
+    .then((config) => Object.assign({}, defaultConfig, config))
+    .catch(() => defaultConfig);
 }
 
 /**
@@ -57,7 +62,7 @@ function loadConfig() {
  * @private
  */
 function createQuestions(config) {
-  const choices = getEmojiChoices(config)
+  const choices = getEmojiChoices(config);
   const fuzzy = new fuse(choices, {
     shouldSort: true,
     threshold: 0.4,
@@ -65,40 +70,47 @@ function createQuestions(config) {
     distance: 100,
     maxPatternLength: 32,
     minMatchCharLength: 1,
-    keys: ["name", "code"]
-})
+    keys: ["name", "code"],
+  });
 
   return [
     {
-      type: 'autocomplete',
-      name: 'type',
+      type: "autocomplete",
+      name: "type",
       message: "Select the type of change you're committing:",
       source: (answersSoFar, query) => {
-        return Promise.resolve(query ? fuzzy.search(query) : choices)
-      }
+        return Promise.resolve(query ? fuzzy.search(query) : choices);
+      },
     },
     {
-      type: config.scopes ? 'list' : 'input',
-      name: 'scope',
-      message: 'Specify a scope:',
-      choices: config.scopes && [{ name: '[none]', value: '' }].concat(config.scopes)
+      type: config.scopes ? "list" : "input",
+      name: "scope",
+      message: "Specify a scope:",
+      choices:
+        config.scopes &&
+        [
+          {
+            name: "[none]",
+            value: "",
+          },
+        ].concat(config.scopes),
     },
     {
-      type: 'input',
-      name: 'subject',
-      message: 'Write a short description:'
+      type: "input",
+      name: "subject",
+      message: "Write a short description:",
     },
     {
-      type: 'input',
-      name: 'issues',
-      message: 'List any issue closed (#1, ...):'
+      type: "input",
+      name: "issues",
+      message: "List any issue closed (#1, ...):",
     },
     {
-      type: 'input',
-      name: 'body',
-      message: 'Provide a longer description:'
-    }
-  ]
+      type: "input",
+      name: "body",
+      message: "Provide a longer description:",
+    },
+  ];
 }
 
 /**
@@ -109,21 +121,17 @@ function createQuestions(config) {
  */
 function format(answers) {
   // parentheses are only needed when a scope is present
-  const scope = answers.scope ? '(' + answers.scope.trim() + ') ' : ''
+  const scope = answers.scope ? "(" + answers.scope.trim() + ") " : "";
 
   // build head line and limit it to 100
-  const head = truncate(answers.type + ' ' + scope + answers.subject.trim(), 100)
+  const head = truncate(answers.type.emo + " " + answers.type.cat + ": " + scope + answers.subject.trim(), 100);
 
   // wrap body at 100
-  const body = wrap(answers.body, 100)
+  const body = wrap(answers.body, 100);
 
-  const footer = (answers.issues.match(/#\d+/g) || [])
-    .map(issue => `Closes ${issue}`)
-    .join('\n')
+  const footer = (answers.issues.match(/#\d+/g) || []).map((issue) => `Closes ${issue}`).join("\n");
 
-  return [head, body, footer]
-    .join('\n\n')
-    .trim()
+  return [head, body, footer].join("\n\n").trim();
 }
 
 /**
@@ -133,11 +141,11 @@ function format(answers) {
  */
 module.exports = {
   prompter: function(cz, commit) {
-    cz.prompt.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'))
+    cz.prompt.registerPrompt("autocomplete", require("inquirer-autocomplete-prompt"));
     loadConfig()
       .then(createQuestions)
       .then(cz.prompt)
       .then(format)
-      .then(commit)
-  }
-}
+      .then(commit);
+  },
+};
