@@ -1,5 +1,4 @@
-[
-  {
+[{
     "emoji": "🎨",
     "code": ":art:",
     "description": "Improving structure / format of the code.",
@@ -345,7 +344,7 @@
     "entity": "&#8bdfe7;",
     "code": ":see_no_evil:",
     "description": "Adding or updating a .gitignore file",
-    "name": "see-no-evil"
+    "name": "ignore"
   },
   {
     "emoji": "📸",
