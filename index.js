@@ -1,15 +1,14 @@
 #!/usr/bin/env node
+'use strict';
 
-"use strict";
-
-const fs = require("fs");
-const readPkg = require("read-pkg-up");
-const truncate = require("cli-truncate");
-const wrap = require("wrap-ansi");
-const pad = require("pad");
-const fuse = require("fuse.js");
-const homeDir = require("home-dir");
-const types = require("./lib/types");
+const fs = require('fs');
+const readPkg = require('read-pkg-up');
+const truncate = require('cli-truncate');
+const wrap = require('wrap-ansi');
+const pad = require('pad');
+const fuse = require('fuse.js');
+const homeDir = require('home-dir');
+const types = require('./lib/types');
 
 const defaultConfig = {
   types,
@@ -30,7 +29,7 @@ function getEmojiChoices({ types, symbol }) {
 }
 
 function loadConfig() {
-  const getConfig = (obj) => obj && obj.config && obj.config["cz-emoji"];
+  const getConfig = (obj) => obj && obj.config && obj.config['cz-emoji'];
 
   return readPkg()
     .then(({ pkg }) => {
@@ -40,7 +39,7 @@ function loadConfig() {
       }
 
       return new Promise((resolve, reject) => {
-        fs.readFile(homeDir(".czrc"), "utf8", (err, content) => {
+        fs.readFile(homeDir('.czrc'), 'utf8', (err, content) => {
           if (err) {
             reject(err);
           }
@@ -70,45 +69,45 @@ function createQuestions(config) {
     distance: 100,
     maxPatternLength: 32,
     minMatchCharLength: 1,
-    keys: ["name", "code"],
+    keys: ['name', 'code'],
   });
 
   return [
     {
-      type: "autocomplete",
-      name: "type",
-      message: "Select the type of change you're committing:",
+      type: 'autocomplete',
+      name: 'type',
+      message: 'Select the type of change you\'re committing:',
       source: (answersSoFar, query) => {
         return Promise.resolve(query ? fuzzy.search(query) : choices);
       },
     },
     {
-      type: config.scopes ? "list" : "input",
-      name: "scope",
-      message: "Specify a scope:",
+      type: config.scopes ? 'list' : 'input',
+      name: 'scope',
+      message: 'Specify a scope:',
       choices:
         config.scopes &&
         [
           {
-            name: "[none]",
-            value: "",
+            name: '[none]',
+            value: '',
           },
         ].concat(config.scopes),
     },
     {
-      type: "input",
-      name: "subject",
-      message: "Write a short description:",
+      type: 'input',
+      name: 'subject',
+      message: 'Write a short description:',
     },
     {
-      type: "input",
-      name: "issues",
-      message: "List any issue closed (#1, ...):",
+      type: 'input',
+      name: 'issues',
+      message: 'List any issue closed (#1, ...):',
     },
     {
-      type: "input",
-      name: "body",
-      message: "Provide a longer description:",
+      type: 'input',
+      name: 'body',
+      message: 'Provide a longer description:',
     },
   ];
 }
@@ -121,17 +120,17 @@ function createQuestions(config) {
  */
 function format(answers) {
   // parentheses are only needed when a scope is present
-  const scope = answers.scope ? "(" + answers.scope.trim() + ") " : "";
+  const scope = answers.scope ? '(' + answers.scope.trim() + ') ' : '';
 
   // build head line and limit it to 100
-  const head = truncate(answers.type.emo + " " + answers.type.cat + ": " + scope + answers.subject.trim(), 100);
+  const head = truncate(answers.type.emo + ' ' + answers.type.cat + ': ' + scope + answers.subject.trim(), 100);
 
   // wrap body at 100
   const body = wrap(answers.body, 100);
 
-  const footer = (answers.issues.match(/#\d+/g) || []).map((issue) => `Closes ${issue}`).join("\n");
+  const footer = (answers.issues.match(/#\d+/g) || []).map((issue) => `Closes ${issue}`).join('\n');
 
-  return [head, body, footer].join("\n\n").trim();
+  return [head, body, footer].join('\n\n').trim();
 }
 
 /**
@@ -141,7 +140,7 @@ function format(answers) {
  */
 module.exports = {
   prompter: function(cz, commit) {
-    cz.prompt.registerPrompt("autocomplete", require("inquirer-autocomplete-prompt"));
+    cz.prompt.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
     loadConfig()
       .then(createQuestions)
       .then(cz.prompt)
