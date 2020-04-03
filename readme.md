@@ -2,7 +2,6 @@
 
 > Commitizen adapter formatting commit messages using emojis.
 
-
 **cz-emoji** allows you to easily use emojis in your commits using [commitizen].
 
 ```sh
@@ -16,11 +15,29 @@
 
 ## Install
 
+**Globally**
+
 ```bash
 npm install --global cz-emoji
 
 # set as default adapter for your projects
 echo '{ "path": "cz-emoji" }' > ~/.czrc
+```
+
+**Locally**
+
+```bash
+npm install --save-dev cz-emoji
+```
+
+Add this to your `package.json`:
+
+```json
+"config": {
+  "commitizen": {
+    "path": "cz-emoji"
+  }
+}
 ```
 
 ## Usage
@@ -29,11 +46,13 @@ echo '{ "path": "cz-emoji" }' > ~/.czrc
 $ git cz
 ```
 
-## Customize
+## Customization
 
-By default `cz-emoji` comes preconfigured with the [Gitmoji](https://gitmoji.carloscuesta.me/) types.
+By default `cz-emoji` comes ready to run out of the box. Uses may vary, so there are a few configuration options to allow fine tuning for project needs.
 
-But you can customize things on a project basis by adding a configuration section in your `package.json`:
+### How to
+
+Configuring `cz-emoji` can be handled in the users home directory (`~/.czrc`) for changes to impact all projects or on a per project basis (`package.json`). Simply add the config property as shown below to the existing object in either of the locations with your settings for override.
 
 ```json
 {
@@ -43,9 +62,14 @@ But you can customize things on a project basis by adding a configuration sectio
 }
 ```
 
-### Types
+### Configuration Options
+
+#### Types
+
+By default `cz-emoji` comes preconfigured with the [Gitmoji](https://gitmoji.carloscuesta.me/) types.
 
 An [Inquirer.js] choices array:
+
 ```json
 {
   "config": {
@@ -63,20 +87,62 @@ An [Inquirer.js] choices array:
 }
 ```
 
-The value `property` must be the emoji itself.
-
-### Scopes
+#### Scopes
 
 An [Inquirer.js] choices array:
+
 ```json
 {
   "config": {
     "cz-emoji": {
-      "scopes": [
-        "home",
-        "accounts",
-        "ci"
-      ]
+      "scopes": ["home", "accounts", "ci"]
+    }
+  }
+}
+```
+
+#### Symbol
+
+A boolean value that allows for an using a unicode value rather than the default of [Gitmoji](https://gitmoji.carloscuesta.me/) markup in a commit message. The default for symbol is false.
+
+```json
+{
+  "config": {
+    "cz-emoji": {
+      "symbol": true
+    }
+  }
+}
+```
+
+#### Skip Questions
+
+An array of questions you want to skip:
+
+```json
+{
+  "config": {
+    "cz-emoji": {
+      "skipQuestions": ["scope", "issues"]
+    }
+  }
+}
+```
+
+You can skip the following questions: `scope`, `body`, and `issues`. The `type` and `subject` questions are mandatory.
+
+
+#### Customize Questions
+
+An object that contains overrides of the original questions:
+
+```json
+{
+  "config": {
+    "cz-emoji": {
+      "questions": {
+        "body": "This will be displayed instead of original text"
+      }
     }
   }
 }
@@ -84,12 +150,33 @@ An [Inquirer.js] choices array:
 
 ## Examples
 
- - https://github.com/Falieson/TRAM
+- https://github.com/Falieson/TRAM
+
+## Commitlint
+
+Commitlint can be set to work with this package by leveraging the package https://github.com/arvinxx/commitlint-config-gitmoji.
+
+```bash
+npm install --save-dev commitlint-config-gitmoji
+```
+
+_commitlint.config.js_
+
+```js
+module.exports = {
+  extends: ['gitmoji'],
+  parserPreset: {
+    parserOpts: {
+      headerPattern: /^(:\w*:)(?:\s)(?:\((.*?)\))?\s((?:.*(?=\())|.*)(?:\(#(\d*)\))?/,
+      headerCorrespondence: ['type', 'scope', 'subject', 'ticket']
+    }
+  }
+}
+```
 
 ## License
 
 MIT © [Nicolas Gryman](http://ngryman.sh)
 
-
 [commitizen]: https://github.com/commitizen/cz-cli
-[Inquirer.js]: https://github.com/SBoudrias/Inquirer.js/
+[inquirer.js]: https://github.com/SBoudrias/Inquirer.js/
